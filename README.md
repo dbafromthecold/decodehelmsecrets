@@ -1,24 +1,40 @@
 # DecodeHelmSecrets
 
-A simple Go utility that converts the `decodehelmsecrets.sh` workflow into a native Go app.
+DecodeHelmSecrets is a lightweight command-line utility for extracting and decoding Helm release templates from Kubernetes secrets.
 
-This tool fetches a Helm secret from Kubernetes using `kubectl`, extracts the `data.release` payload, decodes it twice from base64, decompresses the gzip payload, and prints each Helm chart template name and rendered data.
+The tool retrieves a Helm release secret via `kubectl`, reads the `data.release` payload, performs the required base64 and gzip decoding steps, and outputs each decoded chart template.
 
-## Usage
+## Features
 
-Build the tool:
+- Fetch Helm release secret data from Kubernetes
+- Decode nested base64 payloads
+- Decompress gzip-encoded release content
+- Print decoded chart template names and contents
+- No external JSON or shell parsing dependencies required at runtime
+
+## Installation
+
+Build the tool locally:
 
 ```bash
 go build -o DecodeHelmSecrets
 ```
 
-Run it against a secret:
+## Usage
+
+Run the tool with a secret name:
 
 ```bash
-./DecodeHelmSecrets -secret <secret-name> [-namespace <namespace>]
+./DecodeHelmSecrets -secret <secret-name>
 ```
 
-You can also use the secret name as the first positional argument:
+Optionally specify a namespace:
+
+```bash
+./DecodeHelmSecrets -secret <secret-name> -namespace <namespace>
+```
+
+The secret name can also be provided as the first positional argument:
 
 ```bash
 ./DecodeHelmSecrets <secret-name>
@@ -26,9 +42,10 @@ You can also use the secret name as the first positional argument:
 
 ## Requirements
 
-- `kubectl` installed and configured for the target cluster
-- Access to the secret in the target namespace
+- Go installed for building the utility
+- `kubectl` installed and configured for the target Kubernetes cluster
+- Access to the Helm release secret in the target namespace
 
 ## Notes
 
-This utility is a direct Go rewrite of the original shell script and removes the dependency on `jq`, `gunzip`, and shell string parsing.
+This utility is intended for inspecting Helm release payloads stored in Kubernetes secrets. It does not modify cluster resources.
