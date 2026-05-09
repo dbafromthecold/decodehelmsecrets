@@ -74,15 +74,19 @@ func main() {
 }
 
 func fetchSecret(name, namespace string) ([]byte, error) {
+	if _, err := exec.LookPath("kubectl"); err != nil {
+		return nil, fmt.Errorf("kubectl is not installed or not in PATH: %w", err)
+	}
+
 	args := []string{"get", "secret", name, "-o", "json"}
 	if namespace != "" {
 		args = append(args, "-n", namespace)
 	}
 
 	cmd := exec.Command("kubectl", args...)
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("kubectl failed: %w", err)
+		return nil, fmt.Errorf("kubectl failed: %w: %s", err, bytes.TrimSpace(output))
 	}
 
 	return output, nil
@@ -129,7 +133,15 @@ func printTemplates(data []byte) error {
 		return fmt.Errorf("failed to parse decoded JSON: %w", err)
 	}
 
+	if len(payload.Chart.Templates) == 0 {
+		return fmt.Errorf("decoded release payload does not contain any chart templates")
+	}
+
 	for _, template := range payload.Chart.Templates {
+		if template.Name == "" {
+			return fmt.Errorf("found chart template with empty name")
+		}
+
 		fmt.Println(template.Name)
 		decodedData, err := base64.StdEncoding.DecodeString(template.Data)
 		if err != nil {
